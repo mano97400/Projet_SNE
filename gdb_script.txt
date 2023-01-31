@@ -16,7 +16,33 @@ commands
 	printf "Start %d\n", start
 	printf "End %d\n", end
 	printf "Dif %d\n", dif
-	printf "Dif overhead %d\n",dif_overhead
+	printf "Dif overhead %d\n",diset remotetimeout 10000
+set logging file gdb_result_001.txt
+set logging overwrite on
+set logging on
+set height 0
+set print pretty on
+set print array on
+tar extended-remote localhost:1234
+load
+mon perf reset
+
+hbreak test1
+commands
+	silent
+	printf "\n\n**** Window ****\n"
+	printf "Start_acquisition %d\n", start_acquisition
+	printf "End_acquisition %d\n", end_acquisition
+	printf "Start_accumulation %d\n", start_accumulation
+	printf "End_accumulation %d\n", end_accumulation
+	printf "Start_phase1 %d\n", start_phase1
+	printf "End_phase1 %d\n", end_phase1
+	printf "Overhead %d\n",end_overhead
+	cont
+end
+
+start
+contf_overhead
 	cont
 end
 
