@@ -12,14 +12,21 @@ mon perf reset
 hbreak test1
 commands
 	silent
+	mon perf
+	
 	printf "\n\n**** Window ****\n"
-	printf "Start_acquisition %d\n", start_acquisition
-	printf "End_acquisition %d\n", end_acquisition
-	printf "Start_accumulation %d\n", start_accumulation
-	printf "End_accumulation %d\n", end_accumulation
-	printf "Start_phase1 %d\n", start_phase1
-	printf "End_phase1 %d\n", end_phase1
+	
+	printf "Acquisition duration %d\n", end_acquisition
+	
+	printf "Accumulation duration %d\n", end_accumulation
+	
+	printf "Phase 1 duration %d\n", end_phase1
+	
 	printf "Overhead %d\n",end_overhead
+	
+	printf "Compress duration %d\n", end_compress2
+	
+	printf "Transmission duration %d\n", end_transmission
 	cont
 end
 
