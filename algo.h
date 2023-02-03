@@ -141,7 +141,6 @@ void test_phase2();
  */
 void test_phase_1_2();
 
-
 /**
  * Fonction de breakpoint pour le script gdb : Reset les statistique de la performance du processeur
  */
