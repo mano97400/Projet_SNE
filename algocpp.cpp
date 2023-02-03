@@ -2,76 +2,20 @@ extern "C"{
 	#include "algo.h"
 };
 
-#include<bits/stdc++.h>
-using namespace std;
-
-#include <iostream>
-using namespace std;
-
-#include "RiceCompressor/GsrRiceCompress.h"
-#include "RiceCompressor/GsrRiceUncompress.h"
-#include <RiceCompressor/GsrNotExportedHeader.h>
-#include <RiceCompressor/GsrRiceMacroAndConst.h>
-
-#define INTERRUPT_PENDING_REGISTER 0x80000204
-#define INTERRUPT_FORCE_REGISTER 0x80000208
-#define INTERRUPT_MASK_REGISTER 0x80000240
-#define RX_ADRESS 0x40000000;
-
-volatile uint32_t* interrupt_pending_register = (uint32_t*)INTERRUPT_PENDING_REGISTER;
-volatile uint32_t* interrupt_force_register = (uint32_t*)INTERRUPT_FORCE_REGISTER;
-volatile uint32_t* interrupt_mask_register = (uint32_t*)INTERRUPT_MASK_REGISTER;
-volatile uint32_t* rx_address= (uint32_t*)RX_ADRESS;
-
-
-const long int Nb_Pixel  = 1440;
-int Nb_Paquet = 144;
-int Nb_Bits_par_paquets = 10 ;
-
-int control_reg;
-uint16_t* image;
-uint16_t R[Nb_Pixel];
-uint16_t A[Nb_Pixel];
-
-volatile int32_t start_accumulation;
-volatile int32_t end_accumulation;
-
-volatile int32_t start_acquisition;
-volatile int32_t end_acquisition;
-
-
-volatile int32_t start_phase1;
-volatile int32_t end_phase1;
-
-volatile int32_t start_overhead;
-volatile int32_t end_overhead;
-
-volatile int32_t start_compress;
-volatile int32_t end_compress;
-
-volatile int32_t start_compress2;
-volatile int32_t end_compress2;
-
-volatile int32_t start_transmission;
-volatile int32_t end_transmission;
-
-volatile int Nb_starts_treated = 0;
-
-#define TIMER2_COUNTER_REGISTER 0x80000320
-
-volatile uint32_t* timer2_counter_register = (uint32_t*)TIMER2_COUNTER_REGISTER;
-
-unsigned char compressedBuffer[Nb_Pixel * 4];
-
-// List fifo
-queue<int> list_fifo ;
-
+#include <algocpp.hpp>
 
 void convert_uint_to_short(uint16_t tab1[Nb_Pixel], unsigned short tab2[Nb_Pixel*2] ){
 	for(int i=0;i<Nb_Pixel;i++){
 		tab2[2 * i] = tab1[i] >> 8;
 		tab2[2 * i + 1] = tab1[i] & 0xFF;
 	}
+}
+
+int floor(int size){
+	if((size%2)!=0){
+		return (size/2)+1;
+	}
+	return size/2;
 }
 
 int test_compression(){
@@ -86,28 +30,18 @@ int test_compression(){
 		preprocessResult = preprocess(dataBuffer, Nb_Pixel, preprocessedBuffer, ESTIMATE_1D_H);
 		compressResult = compress(preprocessedBuffer, preprocessResult, compressedBuffer, Nb_Pixel * 2);
 		end_compress2= get_elapsed_time();
-
+		cout << compressResult;
 		return compressResult;
 }
-
-void print_queue(queue<uint16_t> q){
-    while (!q.empty())
-    {
-        cout << q.front() << " ";
-        q.pop();
-    }
-    cout << endl;
-}
-
 
 queue<uint16_t> test_transmission(int compressedBufferSize){
 	// Liste FIFO à retourner
 	queue<uint16_t> list_fifo ;
-
-	uint16_t paquets[3];
+	const int nbr_paquet=floor(compressedBufferSize);
+	uint16_t paquets[nbr_paquet];
 
 	// On découpe les paquets
-	for(int i=0;i<3;i++){
+	for(int i=0;i<nbr_paquet;i++){
 		paquets[i] =compressedBuffer[2*i+1];
 		paquets[i] = (paquets[i] << 8) | compressedBuffer[2*i];
 
@@ -135,46 +69,65 @@ int main() {
 	}
 	init_tab_a(Nb_Pixel, A);
 
-	activate_interruptglobal(interrupt_mask_register);
+	// Activation de l'interruption 10
+	activate_interrupt_10(interrupt_mask_register);
 
-	/*// Calcul du temps de l'acquisition d'une image
 
+/*
+	// --- Pour une image --- //
+
+	//clear_cache();
+	// Calcul du temps de l'acquisition d'une image
 	start_acquisition = get_elapsed_time();
-	test_acquisition(Nb_Paquet,Nb_Bits_par_paquets,control_reg,image,rx_address);
+	test_acquisition(Nb_Paquet,Nb_Pixel_par_paquets,control_reg,image,rx_address);
 	end_acquisition = get_elapsed_time();
 
-
+	//clear_cache();
 	// Calcul du temps de l'accumulation d'une image
-
 	start_accumulation = get_elapsed_time();
 	test_accumulation(R,A,Nb_Pixel);
-	end_accumulation = get_elapsed_time();*/
+	end_accumulation = get_elapsed_time();
 
-	// Calcul du temps de la phase 1
-
-	start_phase1 = get_elapsed_time();
-	phase_1(Nb_Paquet,Nb_Bits_par_paquets,control_reg,image,rx_address,R,A,Nb_Pixel);
-	disable_interrupt(9,interrupt_mask_register);
-	end_phase1 = get_elapsed_time();
-
+	// Calcul de l'overhead
 	start_overhead = get_elapsed_time();
 	time_overhead(Nb_Paquet,interrupt_force_register);
 	end_overhead = get_elapsed_time()/Nb_Paquet;
 
+	//clear_cache();
 	// Compression d'une image
-//	start_compress= get_elapsed_time();
+	start_compress= get_elapsed_time();
 	int sizeCompressBuffer= test_compression();
-//	end_compress = get_elapsed_time();
+	end_compress = get_elapsed_time();
 
+	//clear_cache();
 	// Transmission d'une image compressée
-	start_transmission= get_elapsed_time();
+	start_transmission = get_elapsed_time();
 	test_transmission(sizeCompressBuffer);
-	end_transmission= get_elapsed_time();
+	end_transmission = get_elapsed_time();
 
-	init_tab_a(Nb_Pixel,A);
+	test_algo();
 
-	// Fonction Breakpoint pour le script gdb
-	test1();
+*/
+
+	// --- Pour 10 images --- //
+	test_reset();
+	//clear_cache();
+	// *** PHASE 1 *** //
+	start_phase1 = get_elapsed_time();
+	phase_1(Nb_Paquet,Nb_Pixel_par_paquets,control_reg,image,rx_address,R,A,Nb_Pixel);
+	end_phase1 = get_elapsed_time();
+	test_phase1();
+
+	test_reset();
+	//clear_cache();
+	// *** PHASE 2 *** //
+	start_phase2 = get_elapsed_time();
+	phase_2();
+	end_phase2 = get_elapsed_time();
+	test_phase2();
+
+	test_phase_1_2();
+
 
 	return 0;
 }
